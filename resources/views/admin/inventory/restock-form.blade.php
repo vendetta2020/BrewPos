@@ -5,10 +5,10 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-2xl border border-stone-200/80 shadow-2xs p-6 space-y-6">
-        <div class="border-b border-stone-200/80 pb-4">
-            <h2 class="text-base font-bold text-stone-900 tracking-tight">Pencatatan Masuk Bahan Baku (Restock)</h2>
-            <p class="text-xs text-stone-500 mt-0.5">Catat penerimaan bahan baku gudang. Kuantitas fisik akan bertambah otomatis dan dicatat dalam audit log mutasi (tipe: IN).</p>
+    <div class="bg-[#181716] rounded-2xl border border-[#2D2A26] shadow-lg p-6 space-y-6">
+        <div class="border-b border-[#272320] pb-4">
+            <h2 class="text-base font-bold text-white tracking-tight">Pencatatan Masuk Bahan Baku (Restock)</h2>
+            <p class="text-xs text-[#A8A29E] mt-0.5">Catat penerimaan bahan baku gudang. Kuantitas fisik akan bertambah otomatis dan dicatat dalam audit log mutasi (tipe: IN).</p>
         </div>
 
         <form method="POST" action="{{ route('admin.restocks.store') }}" class="space-y-5">
@@ -16,40 +16,40 @@
 
             <!-- Alert Message -->
             @if (session('success'))
-                <div class="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2.5">
-                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-2.5">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
                     <span>{{ session('success') }}</span>
                 </div>
             @endif
 
             <!-- Bahan Baku Selection -->
             <div class="space-y-1.5">
-                <label for="raw_material_id" class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
-                    Bahan Baku <span class="text-rose-500">*</span>
+                <label for="raw_material_id" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
+                    Bahan Baku <span class="text-rose-400">*</span>
                 </label>
                 <select 
                     id="raw_material_id"
                     name="raw_material_id"
-                    class="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-stone-900 transition"
+                    class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-white transition"
                     required
                 >
-                    <option value="">-- Pilih Bahan Baku --</option>
+                    <option value="" class="bg-[#181716] text-stone-400">-- Pilih Bahan Baku --</option>
                     @forelse ($materials as $material)
-                        <option value="{{ $material->id }}" {{ old('raw_material_id') == $material->id ? 'selected' : '' }}>
+                        <option value="{{ $material->id }}" {{ old('raw_material_id') == $material->id ? 'selected' : '' }} class="bg-[#181716] text-white">
                             {{ $material->name }} ({{ $material->unit }}) — Stok Fisik: {{ number_format($material->stock_qty, 2, ',', '.') }}
                         </option>
                     @empty
-                        <option disabled>Tidak ada bahan baku. Tambahkan bahan baku baru terlebih dahulu.</option>
+                        <option disabled class="bg-[#181716] text-stone-500">Tidak ada bahan baku. Tambahkan bahan baku baru terlebih dahulu.</option>
                     @endforelse
                 </select>
-                @error('raw_material_id')<p class="text-xs text-rose-500 mt-1">{{ $message }}</p>@enderror
+                @error('raw_material_id')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <!-- Jumlah Masuk & Harga per Unit -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-1.5">
-                    <label for="qty_in" class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
-                        Jumlah Kuantitas Masuk <span class="text-rose-500">*</span>
+                    <label for="qty_in" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
+                        Jumlah Kuantitas Masuk <span class="text-rose-400">*</span>
                     </label>
                     <input 
                         type="number" 
@@ -59,15 +59,15 @@
                         placeholder="Contoh: 5000"
                         step="0.01"
                         min="0.01"
-                        class="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-mono font-bold text-stone-900 transition"
+                        class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-mono font-bold text-white transition"
                         required
                     >
-                    @error('qty_in')<p class="text-xs text-rose-500 mt-1">{{ $message }}</p>@enderror
+                    @error('qty_in')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="space-y-1.5">
-                    <label for="cost_per_unit" class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
-                        Harga Beli / Unit (Rp) <span class="text-rose-500">*</span>
+                    <label for="cost_per_unit" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
+                        Harga Beli / Unit (Rp) <span class="text-rose-400">*</span>
                     </label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-500 font-mono font-bold text-xs">Rp</span>
@@ -79,17 +79,17 @@
                             placeholder="0"
                             step="0.01"
                             min="0"
-                            class="w-full pl-10 pr-3.5 py-2.5 bg-white border border-stone-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-mono font-bold text-stone-900 transition"
+                            class="w-full pl-10 pr-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-mono font-bold text-white transition"
                             required
                         >
                     </div>
-                    @error('cost_per_unit')<p class="text-xs text-rose-500 mt-1">{{ $message }}</p>@enderror
+                    @error('cost_per_unit')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
 
             <!-- Supplier -->
             <div class="space-y-1.5">
-                <label for="supplier" class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+                <label for="supplier" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
                     Supplier / Sumber Pengadaan (Opsional)
                 </label>
                 <input 
@@ -98,14 +98,14 @@
                     name="supplier"
                     value="{{ old('supplier') }}"
                     placeholder="Contoh: CV Biji Kopi Nusantara, PT Susu Segar"
-                    class="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-stone-900 placeholder-stone-400 transition"
+                    class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-white placeholder-stone-600 transition"
                 >
-                @error('supplier')<p class="text-xs text-rose-500 mt-1">{{ $message }}</p>@enderror
+                @error('supplier')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <!-- Catatan Tambahan -->
             <div class="space-y-1.5">
-                <label for="note" class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+                <label for="note" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
                     Catatan Tambahan (Opsional)
                 </label>
                 <textarea 
@@ -113,18 +113,18 @@
                     name="note"
                     rows="2"
                     placeholder="Contoh: Pengiriman batch mingguan, kemasan utuh, kedaluwarsa 2027"
-                    class="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-stone-900 placeholder-stone-400 transition"
+                    class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-white placeholder-stone-600 transition"
                 >{{ old('note') }}</textarea>
-                @error('note')<p class="text-xs text-rose-500 mt-1">{{ $message }}</p>@enderror
+                @error('note')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <!-- Info Box -->
-            <div class="p-4 bg-stone-50 border border-stone-200/80 rounded-xl space-y-2 text-xs text-stone-600">
-                <div class="flex items-center gap-1.5 font-bold text-stone-800">
-                    <i data-lucide="info" class="w-4 h-4 text-amber-600"></i>
+            <div class="p-4 bg-[#141210] border border-[#2D2A26] rounded-xl space-y-2 text-xs text-stone-300">
+                <div class="flex items-center gap-1.5 font-bold text-amber-500">
+                    <i data-lucide="info" class="w-4 h-4"></i>
                     <span>Informasi Mutasi Stok</span>
                 </div>
-                <ul class="text-[11px] text-stone-500 space-y-1 pl-5 list-disc">
+                <ul class="text-[11px] text-[#A8A29E] space-y-1 pl-5 list-disc">
                     <li>Kuantitas stok bahan akan otomatis bertambah secara atomik.</li>
                     <li>Harga perolehan baru akan menjadi basis perhitungan HPP produk resep.</li>
                     <li>Seluruh transaksi restock tersimpan permanen di Log Mutasi Stok.</li>
@@ -132,16 +132,16 @@
             </div>
 
             <!-- Buttons -->
-            <div class="pt-4 border-t border-stone-200/80 flex items-center justify-end gap-3">
+            <div class="pt-4 border-t border-[#272320] flex items-center justify-end gap-3">
                 <a 
                     href="{{ route('admin.raw-materials.index') }}" 
-                    class="px-4 py-2.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-50 transition"
+                    class="px-4 py-2.5 rounded-xl border border-[#2D2A26] text-xs font-semibold text-stone-300 hover:bg-[#24211E] transition"
                 >
                     Kembali
                 </a>
                 <button 
                     type="submit" 
-                    class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 active:scale-[0.99] text-white font-bold text-xs uppercase tracking-wider shadow-sm transition flex items-center gap-2"
+                    class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 active:scale-[0.99] text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-amber-600/20 transition flex items-center gap-2"
                 >
                     <i data-lucide="arrow-down-to-dot" class="w-4 h-4"></i>
                     <span>Catat Restock Sekarang</span>
