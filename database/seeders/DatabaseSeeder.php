@@ -20,33 +20,33 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Admin User
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'admin@brewpos.test'],
             [
                 'name' => 'Admin BrewPos',
-                'password' => 'password',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
                 'role' => 'admin',
                 'is_active' => true,
             ]
         );
 
         // Cashier User
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'cashier@brewpos.test'],
             [
                 'name' => 'Cashier Budi',
-                'password' => 'password',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
                 'role' => 'cashier',
                 'is_active' => true,
             ]
         );
 
         // Barista User
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'barista@brewpos.test'],
             [
                 'name' => 'Barista Siti',
-                'password' => 'password',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
                 'role' => 'barista',
                 'is_active' => true,
             ]
