@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    /* Custom BrewPOS Brand & Surface Tokens */
+    --color-surface-bg-dark: #0E0D0D;
+    --color-surface-card-dark: #181716;
+    --color-surface-border-dark: #2D2A26;
+
+    --color-surface-bg-light: #F8F6F0;
+    --color-surface-card-light: #FFFFFF;
+    --color-surface-border-light: #E5E0D8;
+
+    --color-brand-amber: #D97706;
+    --color-brand-amber-hover: #B45309;
+    --color-brand-amber-light: #FEF3C7;
+    
+    --color-brand-espresso: #3C2415;
+    --color-brand-espresso-dark: #24140B;
+
+    --color-status-emerald: #059669;
+    --color-status-emerald-hover: #047857;
+    --color-status-emerald-light: #D1FAE5;
+
+    --color-status-crimson: #DC2626;
+    --color-status-crimson-hover: #B91C1C;
+    --color-status-crimson-light: #FEE2E2;
+}
+
+/* Base Utility & Custom Ergonomic Styling */
+@layer utilities {
+    .font-tabular {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Custom Scrollbar for POS Interface */
+    ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(168, 162, 158, 0.3);
+        border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(168, 162, 158, 0.5);
+    }
+}
+

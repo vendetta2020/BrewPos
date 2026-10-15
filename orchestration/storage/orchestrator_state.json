@@ -1,0 +1,14 @@
+{
+  "current_task_id": null,
+  "workflow_status": "IDLE",
+  "approved_scope": null,
+  "remediation_attempt_count": 0,
+  "max_remediations": 3,
+  "implementation_report": null,
+  "audit_report": null,
+  "next_task_id": null,
+  "last_successful_transition": null,
+  "failure_or_blocking_reason": null,
+  "completed_tasks": [],
+  "history": []
+}
