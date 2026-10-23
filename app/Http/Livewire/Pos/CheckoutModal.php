@@ -28,6 +28,7 @@ class CheckoutModal extends Component
     public ?string $qrisString = null;
     public string $qrisStatus = 'pending';
     public ?string $qrisMessage = null;
+    public ?string $paymentGatewayId = null;
 
     protected $listeners = [
         'openCheckout' => 'open',
@@ -44,6 +45,7 @@ class CheckoutModal extends Component
         $this->qrisString = null;
         $this->qrisStatus = 'pending';
         $this->qrisMessage = null;
+        $this->paymentGatewayId = null;
         $this->recalculateChange();
 
         if ($this->paymentMethod === 'qris') {
@@ -124,7 +126,7 @@ class CheckoutModal extends Component
             $secretKey = env('PAYMENT_GATEWAY_SECRET_KEY');
 
             if ($secretKey) {
-                \Illuminate\Support\Facades\Http::withHeaders([
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
                     'Authorization'   => 'Bearer ' . $secretKey,
                     'Idempotency-Key' => $this->qrisReference,
                     'Content-Type'    => 'application/json',
@@ -135,6 +137,10 @@ class CheckoutModal extends Component
                     'paymentMethod' => 'QRIS',
                     'description'   => 'Pembayaran Kasir BrewPOS Order ' . $this->qrisReference,
                 ]);
+
+                if ($response->successful()) {
+                    $this->paymentGatewayId = $response->json('data.id');
+                }
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Gagal mengirim payment ke gateway: ' . $e->getMessage());
@@ -170,6 +176,36 @@ class CheckoutModal extends Component
         $this->qrisStatus = 'paid';
         $this->qrisMessage = 'Pembayaran berhasil disimulasikan lunas!';
         $this->resetErrorBag('qris');
+
+        // Sinkronkan status lunas ke Payment Gateway jika ada
+        try {
+            $gatewayUrl = env('PAYMENT_GATEWAY_URL', 'http://host.docker.internal:3005/api/v1');
+            $secretKey = env('PAYMENT_GATEWAY_SECRET_KEY');
+
+            if ($secretKey) {
+                $paymentId = $this->paymentGatewayId;
+
+                // Jika paymentId belum tersimpan di state, cari berdasarkan orderId
+                if (! $paymentId) {
+                    $searchRes = \Illuminate\Support\Facades\Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $secretKey,
+                    ])->get(rtrim($gatewayUrl, '/') . '/payments', [
+                        'orderId' => $this->qrisReference,
+                    ]);
+                    $paymentId = $searchRes->json('data.0.id');
+                }
+
+                if ($paymentId) {
+                    \Illuminate\Support\Facades\Http::withHeaders([
+                        'Authorization'   => 'Bearer ' . $secretKey,
+                        'Idempotency-Key' => (string) \Illuminate\Support\Str::uuid(),
+                        'Content-Type'    => 'application/json',
+                    ])->post(rtrim($gatewayUrl, '/') . '/payments/' . $paymentId . '/process');
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal sinkron simulasi payment gateway: ' . $e->getMessage());
+        }
     }
 
     private function recalculateChange(): void
