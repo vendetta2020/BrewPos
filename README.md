@@ -1,14 +1,48 @@
-# BrewPOS — Modern Coffee Shop POS, KDS & Inventory System
+# BrewPOS — Modern Coffee Shop POS, KDS & Enterprise Inventory System
 
 <p align="center">
   <img src="docs/screenshots/02_admin_dashboard.png" width="650" alt="BrewPOS Dashboard" />
 </p>
 
-Aplikasi web full-stack modern untuk operasional kedai kopi *end-to-end* yang mengintegrasikan **Point of Sale (POS)** kasir berkecepatan tinggi, **Kitchen Display System (KDS)** *real-time* untuk barista dapur, **Manajemen Inventori & Resep (Bill of Materials)** dengan kalkulasi HPP riil, serta **Pelaporan Finansial Komprehensif** dengan ekspor Excel dan PDF.
+Aplikasi web full-stack enterprise untuk operasional kedai kopi *end-to-end* yang mengintegrasikan **Point of Sale (POS)** kasir berkecepatan tinggi, **Kitchen Display System (KDS)** *real-time* untuk barista dapur, **Manajemen Inventori & Resep (Bill of Materials)** dengan kalkulasi HPP riil, serta **Pelaporan Finansial Komprehensif** dengan ekspor Excel dan PDF.
+
+Dirancang sebagai bagian integral dari **Ekosistem Enterprise Finansial Lengkap (End-to-End Financial Ecosystem)** yang mensimulasikan integrasi arsitektur nyata tingkat industri antara sistem kasir point-of-sale modern (setara **Moka POS / Pawoon / Olsera**) dengan payment gateway modular berstandar enterprise (setara **Midtrans / Xendit / Stripe**).
 
 Dibangun dengan arsitektur tangguh berbasis **Laravel 11**, **Livewire 3**, **Alpine.js**, dan **MySQL 8.0 InnoDB**, sistem ini dirancang dengan penguncian pesimistik untuk menangani transaksi konkuren tinggi, mencegah *circular wait deadlocks*, mengamankan batas stok non-negatif via *database check constraints*, dan melindungi hak akses multi-role (RBAC).
 
 **Portfolio Engineering Project — Coffee Shop Enterprise POS & Kitchen Management Architecture**
+
+---
+
+## 🌐 Ekosistem Enterprise Finansial (End-to-End Financial Architecture)
+
+Proyek ini dirancang tidak hanya sebagai aplikasi POS kasir yang berdiri sendiri (*standalone*), melainkan sebagai pilar operasional dalam **arsitektur ekosistem finansial modern end-to-end** yang mensimulasikan kolaborasi sistem nyata seperti integrasi antara **Moka POS / Pawoon** dengan payment gateway terkemuka seperti **Midtrans / Xendit**:
+
+```
++-----------------------------------------------------------------------------------------------------+
+|                                 END-TO-END FINANCIAL ECOSYSTEM                                      |
++-----------------------------------------------------------------------------------------------------+
+|                                                                                                     |
+|   [ FRONT-OFFICE / STORE LAYER ]                            [ FINANCIAL & SETTLEMENT LAYER ]        |
+|   +---------------------------------+                       +-----------------------------------+   |
+|   |           BrewPOS               |                       |      Modular Payment Gateway      |   |
+|   |---------------------------------|                       |-----------------------------------|   |
+|   | • Katalog POS & Barcode Scanner |                       | • REST API Payment Processing     |   |
+|   | • Multi-Variant & Resep BOM     |  (1) Create Payment   | • Idempotency Key Guarantees      |   |
+|   | • Kitchen Display System (KDS)  | --------------------> | • EMVCo QRIS Code Generation      |   |
+|   | • Sesi Kasir & Cash Balancing   |                       | • Multi-tenant Merchant Isolation |   |
+|   | • Shift Reconcile & Audit       |                       | • Financial Reconciliation Engine |   |
+|   | • Webhook Receiver (/webhook)   | <-------------------- | • Automated Settlement & Payouts  |   |
+|   +---------------------------------+  (2) HMAC Webhook     +-----------------------------------+   |
+|                                                                                                     |
++-----------------------------------------------------------------------------------------------------+
+```
+
+### Alur Interaksi Ekosistem:
+1. **Pendaftaran Transaksi (*Outbound API Dispatch*)**: Saat kasir memilih metode pembayaran QRIS di kasir BrewPOS, sistem secara otomatis menerbitkan request `POST /api/v1/payments` berotentikasi Bearer API Key ke backend Payment Gateway lengkap dengan `Idempotency-Key` untuk menjamin transaksi tidak pernah terduplikasi.
+2. **Generasi QRIS Standar Nasional**: Payment Gateway mengembalikan representasi transaksi dan payload string EMVCo yang langsung dirender menjadi QR code interaktif di layar kasir pelanggan.
+3. **Penyelesaian Otomatis Tanpa Intervensi Manual (*Zero Manual Reconcile*)**: Begitu pembayaran customer terkonfirmasi lunas di payment gateway, gateway menembakkan webhook asinkronus terenkripsi signature `X-Webhook-Signature` (HMAC-SHA256) ke endpoint BrewPOS (`/api/pos/qris/webhook`).
+4. **Sinkronisasi Instan Dapur & Kasir**: Dalam hitungan sub-detik, modal kasir BrewPOS otomatis mendeteksi status lunas (*Paid*), stok bahan baku dipotong secara atomik melalui locking pesimistik, dan pesanan seketika terdistribusi ke layar KDS barista dapur.
 
 ---
 
