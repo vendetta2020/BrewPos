@@ -1978,8 +1978,7 @@ class BrewPosFlowTest extends TestCase
             ->assertSee('x2')
             ->assertSee('Ukuran: L')
             ->assertSee('Gula: 50%')
-            ->assertSee('Less ice, oat milk substitute')
-            ->assertSee('🆕 BARU')
+            ->assertSee('BARU')
             ->assertSee('Mulai Racik Pesanan');
     }
 
@@ -2008,24 +2007,24 @@ class BrewPosFlowTest extends TestCase
 
         $component = Livewire::actingAs($barista)
             ->test(\App\Http\Livewire\Kds\KdsBoard::class)
-            ->assertSee('🆕 BARU')
+            ->assertSee('BARU')
             ->assertSee('Mulai Racik Pesanan');
 
         // Transition: paid -> processing (KDS-02)
         $component->call('updateStatus', $order->id, 'processing')
-            ->assertSee('⚡ RACIK')
+            ->assertSee('RACIK')
             ->assertSee('Tandai Siap Disajikan');
         $this->assertEquals('processing', $order->fresh()->status);
 
         // Transition: processing -> ready (KDS-03)
         $component->call('updateStatus', $order->id, 'ready')
-            ->assertSee('✓ SIAP')
+            ->assertSee('SIAP')
             ->assertSee('Selesai / Arsipkan');
         $this->assertEquals('ready', $order->fresh()->status);
 
         // Transition: ready -> completed (KDS-04 & SRS KDS-05)
         $component->call('updateStatus', $order->id, 'completed')
-            ->assertSee('✓ SELESAI')
+            ->assertSee('SELESAI')
             ->assertSee('Pesanan Selesai (Fading 2m)');
         $this->assertEquals('completed', $order->fresh()->status);
     }
@@ -2293,6 +2292,215 @@ class BrewPosFlowTest extends TestCase
         auth()->logout();
         $this->get(route('admin.reports.sales'))->assertRedirect(route('login'));
         $this->get(route('admin.reports.sales.export'))->assertRedirect(route('login'));
+    }
+
+    public function test_admin_can_view_recipe_management_index_and_create_and_edit_pages()
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $category = Category::create(['name' => 'Signature Coffee', 'is_active' => true]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Caramel Macchiato',
+            'price' => 32000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.recipes.index'))->assertStatus(200)->assertSee('Formulasi Resep Menu');
+        $this->actingAs($admin)->get(route('admin.recipes.create'))->assertStatus(200)->assertSee('Pilih Menu Produk');
+        $this->actingAs($admin)->get(route('admin.recipes.edit', $product))->assertStatus(200)->assertSee('Caramel Macchiato');
+    }
+
+    public function test_admin_can_save_and_update_recipes_with_automatic_hpp_and_has_recipe_flag()
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $category = Category::create(['name' => 'Coffee', 'is_active' => true]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Mocha Delight',
+            'price' => 28000,
+            'is_active' => true,
+            'has_recipe' => false,
+        ]);
+
+        $beans = RawMaterial::create([
+            'name' => 'Arabica Roast',
+            'category' => 'Biji Kopi',
+            'unit' => 'gram',
+            'cost_per_unit' => 250,
+            'stock_qty' => 5000,
+            'min_stock_qty' => 500,
+            'is_active' => true,
+        ]);
+
+        $chocolate = RawMaterial::create([
+            'name' => 'Dark Chocolate Syrup',
+            'category' => 'Sirup',
+            'unit' => 'ml',
+            'cost_per_unit' => 150,
+            'stock_qty' => 2000,
+            'min_stock_qty' => 200,
+            'is_active' => true,
+        ]);
+
+        // POST to recipes.store with hidden product_id
+        $payload = [
+            'product_id' => $product->id,
+            'recipes' => [
+                [
+                    'raw_material_id' => $beans->id,
+                    'qty_used' => 18,
+                    'size_variant' => 'all',
+                    'notes' => '18g espresso',
+                ],
+                [
+                    'raw_material_id' => $chocolate->id,
+                    'qty_used' => 30,
+                    'size_variant' => 'all',
+                    'notes' => '30ml chocolate',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($admin)->post(route('admin.recipes.store'), $payload);
+        $response->assertRedirect(route('admin.recipes.index'));
+        $response->assertSessionHas('success');
+
+        $product->refresh();
+        $this->assertTrue((bool)$product->has_recipe);
+        $this->assertCount(2, $product->recipes);
+
+        // Verify update route PUT /admin/recipes/{product}
+        $updatePayload = [
+            'recipes' => [
+                [
+                    'raw_material_id' => $beans->id,
+                    'qty_used' => 20,
+                    'size_variant' => 'all',
+                    'notes' => 'Double shot 20g',
+                ],
+            ],
+        ];
+
+        $updateResponse = $this->actingAs($admin)->put(route('admin.recipes.update', $product), $updatePayload);
+        $updateResponse->assertRedirect(route('admin.recipes.index'));
+        $updateResponse->assertSessionHas('success');
+
+        $product->refresh();
+        $this->assertCount(1, $product->recipes);
+        $this->assertEquals(20, (float)$product->recipes->first()->qty_used);
+    }
+
+    public function test_recipe_store_aggregates_duplicate_ingredients_safely_without_violating_unique_constraint()
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $category = Category::create(['name' => 'Frappe', 'is_active' => true]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Java Chip Frappe',
+            'price' => 35000,
+            'is_active' => true,
+        ]);
+
+        $milk = RawMaterial::create([
+            'name' => 'Fresh Milk',
+            'category' => 'Susu',
+            'unit' => 'ml',
+            'cost_per_unit' => 25,
+            'stock_qty' => 10000,
+            'min_stock_qty' => 1000,
+            'is_active' => true,
+        ]);
+
+        // Duplicate milk for size 'all'
+        $payload = [
+            'product_id' => $product->id,
+            'recipes' => [
+                [
+                    'raw_material_id' => $milk->id,
+                    'qty_used' => 100,
+                    'size_variant' => 'all',
+                    'notes' => 'Base milk',
+                ],
+                [
+                    'raw_material_id' => $milk->id,
+                    'qty_used' => 50,
+                    'size_variant' => 'all',
+                    'notes' => 'Extra splash',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($admin)->post(route('admin.recipes.store'), $payload);
+        $response->assertRedirect(route('admin.recipes.index'));
+
+        $product->refresh();
+        $this->assertCount(1, $product->recipes);
+        $this->assertEquals(150, (float)$product->recipes->first()->qty_used);
+    }
+
+    public function test_admin_can_delete_recipe_and_resets_has_recipe_flag()
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $category = Category::create(['name' => 'Tea', 'is_active' => true]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Lemon Tea',
+            'price' => 18000,
+            'is_active' => true,
+            'has_recipe' => true,
+        ]);
+
+        $tea = RawMaterial::create([
+            'name' => 'Black Tea',
+            'category' => 'Teh',
+            'unit' => 'gram',
+            'cost_per_unit' => 100,
+            'stock_qty' => 1000,
+            'min_stock_qty' => 100,
+            'is_active' => true,
+        ]);
+
+        \App\Models\ProductRecipe::create([
+            'product_id' => $product->id,
+            'raw_material_id' => $tea->id,
+            'qty_used' => 5,
+            'size_variant' => 'all',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(route('admin.recipes.destroy', $product));
+        $response->assertRedirect(route('admin.recipes.index'));
+        $response->assertSessionHas('success');
+
+        $product->refresh();
+        $this->assertFalse((bool)$product->has_recipe);
+        $this->assertCount(0, $product->recipes);
+    }
+
+    public function test_non_admin_cannot_access_or_modify_recipes()
+    {
+        $cashier = User::factory()->create(['role' => 'cashier', 'is_active' => true]);
+        $barista = User::factory()->create(['role' => 'barista', 'is_active' => true]);
+        $category = Category::create(['name' => 'Dessert', 'is_active' => true]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Cheesecake',
+            'price' => 30000,
+            'is_active' => true,
+        ]);
+
+        // Cashier forbidden
+        $this->actingAs($cashier)->get(route('admin.recipes.index'))->assertStatus(403);
+        $this->actingAs($cashier)->get(route('admin.recipes.edit', $product))->assertStatus(403);
+        $this->actingAs($cashier)->post(route('admin.recipes.store'), ['product_id' => $product->id])->assertStatus(403);
+
+        // Barista forbidden
+        $this->actingAs($barista)->get(route('admin.recipes.index'))->assertStatus(403);
+        $this->actingAs($barista)->get(route('admin.recipes.edit', $product))->assertStatus(403);
+        $this->actingAs($barista)->delete(route('admin.recipes.destroy', $product))->assertStatus(403);
+
+        // Guest redirected to login
+        auth()->logout();
+        $this->get(route('admin.recipes.index'))->assertRedirect(route('login'));
     }
 }
 

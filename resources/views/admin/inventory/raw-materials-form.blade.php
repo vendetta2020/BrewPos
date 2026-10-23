@@ -60,18 +60,19 @@
                     <label for="unit" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
                         Satuan Pengukuran <span class="text-rose-400">*</span>
                     </label>
-                    <select 
+                    <x-dropdown-select 
                         id="unit"
                         name="unit" 
-                        class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-white transition"
+                        :options="[
+                            'gram' => 'Gram (g)',
+                            'ml' => 'Mililiter (ml)',
+                            'pcs' => 'Pcs (pieces)',
+                            'liter' => 'Liter (L)',
+                        ]"
+                        :selected="old('unit', $material->unit ?? '')"
+                        placeholder="-- Pilih Satuan --"
                         required
-                    >
-                        <option value="" class="bg-[#181716] text-stone-400">-- Pilih Satuan --</option>
-                        <option value="gram" {{ old('unit', $material->unit ?? '') === 'gram' ? 'selected' : '' }} class="bg-[#181716] text-white">Gram (g)</option>
-                        <option value="ml" {{ old('unit', $material->unit ?? '') === 'ml' ? 'selected' : '' }} class="bg-[#181716] text-white">Mililiter (ml)</option>
-                        <option value="pcs" {{ old('unit', $material->unit ?? '') === 'pcs' ? 'selected' : '' }} class="bg-[#181716] text-white">Pcs (pieces)</option>
-                        <option value="liter" {{ old('unit', $material->unit ?? '') === 'liter' ? 'selected' : '' }} class="bg-[#181716] text-white">Liter (L)</option>
-                    </select>
+                    />
                     @error('unit')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
@@ -96,6 +97,7 @@
                             required
                         >
                     </div>
+                    <p class="text-[10px] text-stone-400 mt-1">Harga modal per 1 satuan (cth: Rp/gram atau Rp/ml).</p>
                     @error('cost_per_unit')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
                 </div>
 
@@ -114,6 +116,7 @@
                         class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-mono font-bold text-white transition"
                         required
                     >
+                    <p class="text-[10px] text-stone-400 mt-1">Sesuai satuan di atas (cth: gram/ml/pcs).</p>
                     @error('stock_qty')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
                 </div>
 
@@ -132,6 +135,7 @@
                         class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-mono font-bold text-white transition"
                         required
                     >
+                    <p class="text-[10px] text-stone-400 mt-1">Batas alert (cth: 1000 gram / 50 pcs).</p>
                     @error('min_stock_qty')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>

@@ -22,6 +22,13 @@ class CheckoutModal extends Component
     public bool $isOpen = false;
     public bool $isProcessing = false;
 
+    // QRIS properties
+    public ?string $qrisReference = null;
+    public ?string $qrisImage = null;
+    public ?string $qrisString = null;
+    public string $qrisStatus = 'pending';
+    public ?string $qrisMessage = null;
+
     protected $listeners = [
         'openCheckout' => 'open',
     ];
@@ -32,7 +39,16 @@ class CheckoutModal extends Component
         $this->isOpen = true;
         $this->cashPaid = null;
         $this->isProcessing = false;
+        $this->qrisReference = null;
+        $this->qrisImage = null;
+        $this->qrisString = null;
+        $this->qrisStatus = 'pending';
+        $this->qrisMessage = null;
         $this->recalculateChange();
+
+        if ($this->paymentMethod === 'qris') {
+            $this->generateQris();
+        }
     }
 
     public function updatedCashPaid(): void
@@ -40,9 +56,98 @@ class CheckoutModal extends Component
         $this->recalculateChange();
     }
 
+    /**
+     * Accumulate nominal to cashPaid (e.g. click +50.000 then +200.000 -> 250.000).
+     */
+    public function addCashAmount(float $amount): void
+    {
+        $current = (float) ($this->cashPaid ?? 0);
+        $this->cashPaid = $current + $amount;
+        $this->recalculateChange();
+    }
+
+    /**
+     * Set exact cash matching the cart total.
+     */
+    public function setExactCash(): void
+    {
+        $total = collect($this->cart)->sum(fn($i) => $i['price'] * $i['quantity']);
+        $this->cashPaid = $total;
+        $this->recalculateChange();
+    }
+
+    /**
+     * Reset/clear the cash input.
+     */
+    public function clearCash(): void
+    {
+        $this->cashPaid = null;
+        $this->recalculateChange();
+    }
+
+    public function selectPaymentMethod(string $method): void
+    {
+        $this->paymentMethod = $method;
+        $this->recalculateChange();
+        if ($this->paymentMethod === 'qris') {
+            $this->generateQris();
+        }
+    }
+
     public function updatedPaymentMethod(): void
     {
         $this->recalculateChange();
+        if ($this->paymentMethod === 'qris' && ! $this->qrisImage) {
+            $this->generateQris();
+        }
+    }
+
+    public function generateQris(): void
+    {
+        $total = collect($this->cart)->sum(fn($i) => $i['price'] * $i['quantity']);
+        if ($total <= 0) {
+            return;
+        }
+
+        $qrisService = app(\App\Services\QrisService::class);
+        $trx = $qrisService->createTransaction($total);
+
+        $this->qrisReference = $trx['reference_no'];
+        $this->qrisImage = $trx['qr_image'];
+        $this->qrisString = $trx['qr_string'];
+        $this->qrisStatus = 'pending';
+        $this->qrisMessage = null;
+    }
+
+    public function checkQrisStatus(bool $manual = false): void
+    {
+        if (! $this->qrisReference) {
+            return;
+        }
+
+        $qrisService = app(\App\Services\QrisService::class);
+        $trx = $qrisService->getTransaction($this->qrisReference);
+
+        if ($trx && $trx['status'] === 'paid') {
+            $this->qrisStatus = 'paid';
+            $this->qrisMessage = 'Pembayaran QRIS telah terverifikasi lunas!';
+            $this->resetErrorBag('qris');
+        } elseif ($manual) {
+            $this->qrisMessage = 'Pembayaran belum terdeteksi. Silakan coba beberapa saat lagi.';
+        }
+    }
+
+    public function simulateQrisPayment(): void
+    {
+        if (! $this->qrisReference) {
+            return;
+        }
+
+        $qrisService = app(\App\Services\QrisService::class);
+        $qrisService->markAsPaid($this->qrisReference, ['simulated' => true]);
+        $this->qrisStatus = 'paid';
+        $this->qrisMessage = 'Pembayaran berhasil disimulasikan lunas!';
+        $this->resetErrorBag('qris');
     }
 
     private function recalculateChange(): void
@@ -88,6 +193,20 @@ class CheckoutModal extends Component
                 'cashPaid.numeric'       => 'Jumlah uang tunai harus berupa angka.',
                 'cashPaid.min'           => 'Uang tunai yang dibayarkan kurang dari total tagihan (Rp ' . number_format($total, 0, ',', '.') . ').',
             ]);
+
+            // 1b. Strict validation: QRIS payment cannot be finalized without successful verification
+            if ($this->paymentMethod === 'qris') {
+                if ($this->qrisStatus !== 'paid') {
+                    $qrisService = app(\App\Services\QrisService::class);
+                    $trx = $this->qrisReference ? $qrisService->getTransaction($this->qrisReference) : null;
+                    if ($trx && $trx['status'] === 'paid') {
+                        $this->qrisStatus = 'paid';
+                    } else {
+                        $this->addError('qris', 'Pembayaran QRIS belum diverifikasi atau belum lunas.');
+                        return;
+                    }
+                }
+            }
 
             // 2. Ensure cashier session exists for current user
             $session = CashierSession::where('user_id', Auth::id())->where('status', 'open')->latest()->first();
@@ -138,6 +257,7 @@ class CheckoutModal extends Component
                         'tax'                => 0,
                         'total'              => $total,
                         'payment_method'     => $this->paymentMethod,
+                        'payment_reference'  => $this->paymentMethod === 'qris' ? $this->qrisReference : null,
                         'cash_received'      => $this->paymentMethod === 'cash' ? (float) $this->cashPaid : $total,
                         'change_given'       => $this->paymentMethod === 'cash' ? $this->change : 0,
                         'status'             => 'paid',
@@ -166,6 +286,13 @@ class CheckoutModal extends Component
 
             // 5. Broadcast order placed to KDS
             event(new OrderPlaced($order));
+
+            if ($this->paymentMethod === 'qris' && $this->qrisReference) {
+                app(\App\Services\QrisService::class)->markAsPaid($this->qrisReference, [
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                ]);
+            }
 
             // 6. Clear cart in PosInterface and notify frontend listeners
             if (method_exists($this, 'dispatch')) {

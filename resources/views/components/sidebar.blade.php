@@ -91,7 +91,7 @@
 
         <!-- Transactions Section -->
         <div class="pt-4">
-            <p class="px-3.5 pb-1.5 text-[10px] font-bold text-stone-500 uppercase tracking-wider">Operasional & Kasir</p>
+            <p class="px-3.5 pb-1.5 text-[10px] font-bold text-stone-500 uppercase tracking-wider">Operasional & Pesanan</p>
             <div class="space-y-0.5">
                 <a 
                     href="{{ route('admin.orders.index') }}"
@@ -99,24 +99,6 @@
                 >
                     <i data-lucide="receipt" class="w-4 h-4 shrink-0"></i>
                     <span>Riwayat Pesanan</span>
-                </a>
-                <a 
-                    href="{{ route('pos') }}"
-                    target="_blank"
-                    class="flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium transition-all text-stone-400 hover:text-stone-200 hover:bg-[#201D1A]"
-                >
-                    <i data-lucide="monitor" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-                    <span>Layar Kasir (POS)</span>
-                    <i data-lucide="external-link" class="w-3 h-3 ml-auto opacity-50"></i>
-                </a>
-                <a 
-                    href="{{ route('kds') }}"
-                    target="_blank"
-                    class="flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium transition-all text-stone-400 hover:text-stone-200 hover:bg-[#201D1A]"
-                >
-                    <i data-lucide="chef-hat" class="w-4 h-4 text-amber-400 shrink-0"></i>
-                    <span>Kitchen Display (KDS)</span>
-                    <i data-lucide="external-link" class="w-3 h-3 ml-auto opacity-50"></i>
                 </a>
             </div>
         </div>

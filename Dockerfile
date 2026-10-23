@@ -34,7 +34,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy entrypoint
+# Copy entrypoint and php config
+COPY docker/php/custom.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 

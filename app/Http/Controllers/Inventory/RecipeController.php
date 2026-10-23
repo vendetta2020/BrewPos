@@ -7,6 +7,7 @@ use App\Models\ProductRecipe;
 use App\Models\RawMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 
 class RecipeController extends Controller
 {
@@ -41,13 +42,12 @@ class RecipeController extends Controller
         $totalProducts = Product::count();
         $productsWithRecipe = Product::whereHas('recipes')->count();
 
-        // Calculate average HPP
-        $hppData = Product::with('recipes.rawMaterial')
-            ->get()
+        // Calculate average HPP without N+1 queries
+        $hppData = $products
             ->map(function ($product) {
-                return $product->recipes()
-                    ->join('raw_materials', 'product_recipes.raw_material_id', '=', 'raw_materials.id')
-                    ->sum(\DB::raw('product_recipes.qty_used * raw_materials.cost_per_unit'));
+                return $product->recipes->sum(function ($r) {
+                    return (float) $r->qty_used * (float) ($r->rawMaterial?->cost_per_unit ?? 0);
+                });
             })
             ->filter(fn($hpp) => $hpp > 0);
 
@@ -68,8 +68,8 @@ class RecipeController extends Controller
      */
     public function create()
     {
-        $products = Product::where('is_active', true)->get();
-        $materials = RawMaterial::where('is_active', true)->get();
+        $products = Product::where('is_active', true)->orderBy('name')->get();
+        $materials = RawMaterial::where('is_active', true)->orderBy('name')->get();
 
         return view('inventory.recipes.create', [
             'products' => $products,
@@ -86,7 +86,7 @@ class RecipeController extends Controller
      */
     public function edit(Product $product)
     {
-        $materials = RawMaterial::where('is_active', true)->get();
+        $materials = RawMaterial::where('is_active', true)->orderBy('name')->get();
         $recipes = $product->recipes()->with('rawMaterial')->get();
 
         // Calculate HPP for each size variant
@@ -109,33 +109,74 @@ class RecipeController extends Controller
      */
     public function store(Request $request)
     {
+        // Resilient fallback for product_id if passed via route parameter or query
+        if (! $request->filled('product_id')) {
+            $productParam = $request->input('product_id') 
+                ?? $request->query('product') 
+                ?? $request->route('product');
+
+            if ($productParam instanceof Product) {
+                $productParam = $productParam->id;
+            }
+
+            if ($productParam) {
+                $request->merge(['product_id' => $productParam]);
+            }
+        }
+
         $validated = $request->validate([
-            'product_id' => ['required', 'exists:products,id'],
-            'recipes'   => ['required', 'array'],
+            'product_id'                 => ['required', 'exists:products,id'],
+            'recipes'                    => ['required', 'array', 'min:1'],
             'recipes.*.raw_material_id'  => ['required', 'exists:raw_materials,id'],
             'recipes.*.qty_used'         => ['required', 'numeric', 'min:0.01'],
-            'recipes.*.size_variant'     => ['nullable', 'string'],
+            'recipes.*.size_variant'     => ['nullable', 'string', 'in:S,M,L,all'],
             'recipes.*.notes'            => ['nullable', 'string', 'max:255'],
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
 
-        // Delete existing recipes for this product (will be recreated)
-        $product->recipes()->delete();
+        DB::transaction(function () use ($product, $validated) {
+            // Aggregate duplicates to protect against MySQL unique constraint violation on (product_id, raw_material_id, size_variant)
+            $aggregatedRecipes = [];
+            foreach ($validated['recipes'] as $recipe) {
+                $rawMaterialId = (int) $recipe['raw_material_id'];
+                $sizeVariant = !empty($recipe['size_variant']) ? $recipe['size_variant'] : 'all';
+                $qty = (float) $recipe['qty_used'];
+                $notes = !empty($recipe['notes']) ? trim($recipe['notes']) : null;
 
-        // Create new recipes
-        foreach ($validated['recipes'] as $recipe) {
-            ProductRecipe::create([
-                'product_id'       => $product->id,
-                'raw_material_id'  => $recipe['raw_material_id'],
-                'qty_used'         => $recipe['qty_used'],
-                'size_variant'     => $recipe['size_variant'] ?? null,
-                'notes'            => $recipe['notes'] ?? null,
-            ]);
-        }
+                $key = "{$rawMaterialId}_{$sizeVariant}";
+                if (isset($aggregatedRecipes[$key])) {
+                    $aggregatedRecipes[$key]['qty_used'] += $qty;
+                    if ($notes) {
+                        $aggregatedRecipes[$key]['notes'] = trim(($aggregatedRecipes[$key]['notes'] ?? '') . '; ' . $notes, '; ');
+                    }
+                } else {
+                    $aggregatedRecipes[$key] = [
+                        'raw_material_id' => $rawMaterialId,
+                        'qty_used'        => $qty,
+                        'size_variant'    => $sizeVariant,
+                        'notes'           => $notes,
+                    ];
+                }
+            }
 
-        // Mark product as having recipe
-        $product->update(['has_recipe' => true]);
+            // Delete existing recipes for this product (will be recreated)
+            $product->recipes()->delete();
+
+            // Create new recipes
+            foreach ($aggregatedRecipes as $item) {
+                ProductRecipe::create([
+                    'product_id'       => $product->id,
+                    'raw_material_id'  => $item['raw_material_id'],
+                    'qty_used'         => $item['qty_used'],
+                    'size_variant'     => $item['size_variant'],
+                    'notes'            => $item['notes'],
+                ]);
+            }
+
+            // Mark product as having recipe
+            $product->update(['has_recipe' => true]);
+        });
 
         return redirect()
             ->route('admin.recipes.index')
@@ -150,29 +191,55 @@ class RecipeController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'recipes'   => ['required', 'array'],
+            'recipes'                    => ['required', 'array', 'min:1'],
             'recipes.*.raw_material_id'  => ['required', 'exists:raw_materials,id'],
             'recipes.*.qty_used'         => ['required', 'numeric', 'min:0.01'],
-            'recipes.*.size_variant'     => ['nullable', 'string'],
+            'recipes.*.size_variant'     => ['nullable', 'string', 'in:S,M,L,all'],
             'recipes.*.notes'            => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Delete existing recipes for this product
-        $product->recipes()->delete();
+        DB::transaction(function () use ($product, $validated) {
+            // Aggregate duplicates to protect against MySQL unique constraint violation on (product_id, raw_material_id, size_variant)
+            $aggregatedRecipes = [];
+            foreach ($validated['recipes'] as $recipe) {
+                $rawMaterialId = (int) $recipe['raw_material_id'];
+                $sizeVariant = !empty($recipe['size_variant']) ? $recipe['size_variant'] : 'all';
+                $qty = (float) $recipe['qty_used'];
+                $notes = !empty($recipe['notes']) ? trim($recipe['notes']) : null;
 
-        // Create new recipes
-        foreach ($validated['recipes'] as $recipe) {
-            ProductRecipe::create([
-                'product_id'       => $product->id,
-                'raw_material_id'  => $recipe['raw_material_id'],
-                'qty_used'         => $recipe['qty_used'],
-                'size_variant'     => $recipe['size_variant'] ?? null,
-                'notes'            => $recipe['notes'] ?? null,
-            ]);
-        }
+                $key = "{$rawMaterialId}_{$sizeVariant}";
+                if (isset($aggregatedRecipes[$key])) {
+                    $aggregatedRecipes[$key]['qty_used'] += $qty;
+                    if ($notes) {
+                        $aggregatedRecipes[$key]['notes'] = trim(($aggregatedRecipes[$key]['notes'] ?? '') . '; ' . $notes, '; ');
+                    }
+                } else {
+                    $aggregatedRecipes[$key] = [
+                        'raw_material_id' => $rawMaterialId,
+                        'qty_used'        => $qty,
+                        'size_variant'    => $sizeVariant,
+                        'notes'           => $notes,
+                    ];
+                }
+            }
 
-        // Mark product as having recipe
-        $product->update(['has_recipe' => true]);
+            // Delete existing recipes for this product
+            $product->recipes()->delete();
+
+            // Create new recipes
+            foreach ($aggregatedRecipes as $item) {
+                ProductRecipe::create([
+                    'product_id'       => $product->id,
+                    'raw_material_id'  => $item['raw_material_id'],
+                    'qty_used'         => $item['qty_used'],
+                    'size_variant'     => $item['size_variant'],
+                    'notes'            => $item['notes'],
+                ]);
+            }
+
+            // Mark product as having recipe
+            $product->update(['has_recipe' => true]);
+        });
 
         return redirect()
             ->route('admin.recipes.index')
@@ -186,8 +253,10 @@ class RecipeController extends Controller
      */
     public function destroy(Product $product)
     {
-        $product->recipes()->delete();
-        $product->update(['has_recipe' => false]);
+        DB::transaction(function () use ($product) {
+            $product->recipes()->delete();
+            $product->update(['has_recipe' => false]);
+        });
 
         return redirect()
             ->route('admin.recipes.index')
@@ -200,7 +269,7 @@ class RecipeController extends Controller
      * HPP = sum of (qty_used × cost_per_unit) for each raw material in recipe.
      *
      * @param Product $product
-     * @return array  Keyed by size variant: ['S' => 1500, 'M' => 2000, 'L' => 2500]
+     * @return array  Keyed by size variant: ['all' => 1500, 'S' => 1500, 'M' => 2000, 'L' => 2500]
      */
     private function calculateHpp(Product $product): array
     {
@@ -212,6 +281,10 @@ class RecipeController extends Controller
             ->pluck('size_variant')
             ->unique();
 
+        if ($sizes->isEmpty()) {
+            return [];
+        }
+
         foreach ($sizes as $size) {
             $totalCost = $product->recipes()
                 ->where(function ($q) use ($size) {
@@ -221,7 +294,7 @@ class RecipeController extends Controller
                 ->with('rawMaterial')
                 ->get()
                 ->sum(function ($recipe) {
-                    return $recipe->qty_used * $recipe->rawMaterial->cost_per_unit;
+                    return (float) $recipe->qty_used * (float) ($recipe->rawMaterial?->cost_per_unit ?? 0);
                 });
 
             $hpp[$size] = $totalCost;

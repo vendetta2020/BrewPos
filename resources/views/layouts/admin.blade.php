@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Dashboard') — BrewPOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="{{ asset('js/lucide.min.js') }}"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
     </style>
@@ -59,30 +61,8 @@
 
                 <!-- Right Header Actions & Profile -->
                 <div class="flex items-center gap-3">
-                    <!-- Quick POS Link -->
-                    <a 
-                        href="{{ route('pos') }}" 
-                        target="_blank"
-                        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-semibold rounded-xl border border-amber-500/25 transition-all shadow-xs"
-                        title="Buka Kasir POS di Tab Baru"
-                    >
-                        <i data-lucide="monitor" class="w-3.5 h-3.5 text-amber-400"></i>
-                        <span>Buka POS</span>
-                    </a>
-
-                    <!-- Quick KDS Link -->
-                    <a 
-                        href="{{ route('kds') }}" 
-                        target="_blank"
-                        class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs font-semibold rounded-xl border border-purple-500/25 transition-all shadow-xs"
-                        title="Buka Kitchen Display di Tab Baru"
-                    >
-                        <i data-lucide="chef-hat" class="w-3.5 h-3.5 text-purple-400"></i>
-                        <span>Layar KDS</span>
-                    </a>
-
                     <!-- User Profile & Logout -->
-                    <div class="flex items-center gap-2.5 pl-3 border-l border-[#272320]">
+                    <div class="flex items-center gap-2.5">
                         <div class="w-8 h-8 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-xl flex items-center justify-center font-bold text-xs shadow-xs">
                             {{ substr(Auth::user()->name, 0, 1) }}
                         </div>
@@ -162,5 +142,6 @@
             }
         });
     </script>
+    @stack('scripts')
 </body>
 </html>

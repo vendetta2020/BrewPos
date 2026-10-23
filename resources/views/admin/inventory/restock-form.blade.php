@@ -27,21 +27,19 @@
                 <label for="raw_material_id" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
                     Bahan Baku <span class="text-rose-400">*</span>
                 </label>
-                <select 
+                @php
+                    $materialOptions = $materials->mapWithKeys(function ($m) {
+                        return [$m->id => "{$m->name} ({$m->unit}) — Stok: " . number_format($m->stock_qty, 0, ',', '.')];
+                    })->toArray();
+                @endphp
+                <x-dropdown-select 
                     id="raw_material_id"
                     name="raw_material_id"
-                    class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-white transition"
+                    :options="$materialOptions"
+                    :selected="old('raw_material_id')"
+                    placeholder="-- Pilih Bahan Baku --"
                     required
-                >
-                    <option value="" class="bg-[#181716] text-stone-400">-- Pilih Bahan Baku --</option>
-                    @forelse ($materials as $material)
-                        <option value="{{ $material->id }}" {{ old('raw_material_id') == $material->id ? 'selected' : '' }} class="bg-[#181716] text-white">
-                            {{ $material->name }} ({{ $material->unit }}) — Stok Fisik: {{ number_format($material->stock_qty, 2, ',', '.') }}
-                        </option>
-                    @empty
-                        <option disabled class="bg-[#181716] text-stone-500">Tidak ada bahan baku. Tambahkan bahan baku baru terlebih dahulu.</option>
-                    @endforelse
-                </select>
+                />
                 @error('raw_material_id')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
             </div>
 

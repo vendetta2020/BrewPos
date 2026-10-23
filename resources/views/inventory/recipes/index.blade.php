@@ -4,42 +4,71 @@
 @section('page_title', 'Manajemen Resep Menu')
 
 @section('content')
-<div class="space-y-6">
-    <!-- Action Bar & Header -->
-    <div class="bg-[#181716] rounded-2xl border border-[#2D2A26] p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-            <h2 class="text-base font-bold text-white tracking-tight">Formulasi Resep Menu & Biaya Produksi (HPP)</h2>
-            <p class="text-xs text-[#A8A29E] mt-0.5">Kelola takaran bahan baku per menu untuk auto-deduction saat checkout dan kalkulasi margin laba.</p>
+<div class="space-y-5">
+    <!-- Summary Metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="stat-tile flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-stone-400">Total Produk Menu</span>
+                <i data-lucide="coffee" class="w-4 h-4 text-stone-400"></i>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold font-mono text-white tabular-nums">{{ $totalProducts }}</div>
+                <p class="text-[11px] text-stone-400 mt-0.5">Produk aktif dalam katalog</p>
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-            <span class="text-xs text-[#A8A29E]">
-                Total Menu: <strong class="font-mono text-white">{{ $totalProducts }}</strong>
-            </span>
+
+        <div class="stat-tile flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-stone-400">Resep Dikonfigurasi</span>
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold font-mono text-emerald-400 tabular-nums">{{ $productsWithRecipe }}</div>
+                <p class="text-[11px] text-stone-400 mt-0.5">{{ $totalProducts - $productsWithRecipe }} menu belum beresep</p>
+            </div>
+        </div>
+
+        <div class="stat-tile flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-stone-400">Rata-rata HPP</span>
+                <i data-lucide="calculator" class="w-4 h-4 text-amber-500"></i>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold font-mono text-amber-400 tabular-nums">
+                    Rp {{ number_format($averageHpp, 0, ',', '.') }}
+                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">Biaya bahan pokok per porsi</p>
+            </div>
         </div>
     </div>
 
-    <!-- Search & Filter Bar -->
-    <div class="bg-[#181716] rounded-2xl border border-[#2D2A26] p-4 shadow-lg flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <form method="GET" class="flex flex-1 flex-col sm:flex-row gap-3 w-full">
-            <div class="relative flex-1">
+    <!-- Header Action Bar & Filter -->
+    <div class="surface-card p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 class="text-sm font-semibold text-stone-200">Formulasi Resep Menu</h2>
+            <p class="text-xs text-stone-400 mt-0.5">Kelola takaran bahan baku per menu untuk auto-deduction dan kalkulasi margin laba.</p>
+        </div>
+        <form method="GET" class="flex flex-1 sm:flex-initial flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+            <div class="relative flex-1 w-full sm:w-64">
                 <input 
                     name="search"
                     value="{{ request('search') }}"
-                    class="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl bg-[#141312] border border-[#2D2A26] text-white placeholder-stone-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500" 
+                    class="form-input pl-8" 
                     placeholder="Cari produk menu..." 
                     type="text"
                 />
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-500">
-                    <i data-lucide="search" class="w-4 h-4"></i>
+                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-stone-500">
+                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </div>
             </div>
             
-            <div class="flex items-center rounded-xl overflow-hidden border border-[#2D2A26] bg-[#141312]">
+            <div class="inline-flex rounded-lg p-0.5 border border-[#2D2A26] bg-[#141312] shrink-0">
                 <button 
                     type="submit" 
                     name="filter"
                     value="all"
-                    class="px-3.5 py-2 text-xs font-semibold border-r border-[#2D2A26] transition {{ request('filter', 'all') === 'all' ? 'bg-amber-600 text-white' : 'text-stone-300 hover:text-white' }}"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors {{ request('filter', 'all') === 'all' ? 'bg-[#22201E] text-white' : 'text-stone-400 hover:text-stone-200' }}"
                 >
                     Semua
                 </button>
@@ -47,7 +76,7 @@
                     type="submit" 
                     name="filter"
                     value="with-recipe"
-                    class="px-3.5 py-2 text-xs font-semibold border-r border-[#2D2A26] transition {{ request('filter') === 'with-recipe' ? 'bg-amber-600 text-white' : 'text-stone-300 hover:text-white' }}"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors {{ request('filter') === 'with-recipe' ? 'bg-[#22201E] text-white' : 'text-stone-400 hover:text-stone-200' }}"
                 >
                     Ada Resep
                 </button>
@@ -55,98 +84,123 @@
                     type="submit" 
                     name="filter"
                     value="no-recipe"
-                    class="px-3.5 py-2 text-xs font-semibold transition {{ request('filter') === 'no-recipe' ? 'bg-amber-600 text-white' : 'text-stone-300 hover:text-white' }}"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors {{ request('filter') === 'no-recipe' ? 'bg-[#22201E] text-white' : 'text-stone-400 hover:text-stone-200' }}"
                 >
                     Belum Ada
                 </button>
             </div>
 
             @if(request()->hasAny(['search', 'filter']))
-                <a href="{{ route('admin.recipes.index') }}" class="px-3 py-2.5 bg-[#24211E] hover:bg-[#2D2A26] text-stone-300 border border-[#2D2A26] text-xs font-semibold rounded-xl transition flex items-center justify-center">
+                <a href="{{ route('admin.recipes.index') }}" class="btn btn-sm btn-outline shrink-0" title="Reset Filter">
                     <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                 </a>
             @endif
         </form>
+
+        <a href="{{ route('admin.recipes.create') }}" class="btn btn-sm btn-primary shrink-0 w-full sm:w-auto">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Formulasi Resep Baru</span>
+        </a>
     </div>
 
-    <!-- Recipe Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- Recipe Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @forelse($products as $product)
             @php
-                $hasRecipe = $product->recipes()->exists();
-                $recipeStatus = $hasRecipe ? 'Resep Lengkap' : 'Belum Ada Resep';
-                $ingredientCount = $product->recipes()->count();
-                $hppTotal = $product->recipes()
-                    ->join('raw_materials', 'product_recipes.raw_material_id', '=', 'raw_materials.id')
-                    ->sum(\DB::raw('product_recipes.qty_used * raw_materials.cost_per_unit'));
+                $hasRecipe = $product->recipes->isNotEmpty();
+                $hppTotal = $product->recipes->sum(function ($r) {
+                    return (float) $r->qty_used * (float) ($r->rawMaterial?->cost_per_unit ?? 0);
+                });
+                $margin = $product->price > 0 && $hppTotal > 0 ? (($product->price - $hppTotal) / $product->price) * 100 : 0;
             @endphp
-            <div class="bg-[#181716] border border-[#2D2A26] rounded-2xl p-5 flex flex-col h-full hover:border-amber-500/40 transition shadow-lg group">
-                <div class="flex justify-between items-start mb-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-                        <i data-lucide="coffee" class="w-5 h-5"></i>
+            <div class="surface-card p-4 flex flex-col justify-between hover:border-[#383430] transition-colors group">
+                <div>
+                    <!-- Header -->
+                    <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-[#22201D]">
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">
+                                {{ $product->name }}
+                            </h3>
+                            <span class="text-[11px] text-stone-400">
+                                {{ $product->category->name ?? 'Tanpa Kategori' }}
+                            </span>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="font-mono text-xs font-bold text-stone-200 tabular-nums">
+                                Rp {{ number_format($product->price, 0, ',', '.') }}
+                            </span>
+                            <span class="block text-[10px] text-stone-500 font-mono">Harga Jual</span>
+                        </div>
                     </div>
-                    <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#141312] text-stone-300 border border-[#2D2A26]">
-                        {{ $product->category->name ?? 'Uncategorized' }}
-                    </span>
-                </div>
-                
-                <!-- Product Info -->
-                <h3 class="text-base font-bold text-white mb-1 group-hover:text-amber-400 transition">{{ $product->name }}</h3>
-                <p class="text-xs text-[#A8A29E] line-clamp-2 mb-4">{{ $product->description ?? 'Menu minuman racikan BrewPOS' }}</p>
-                
-                <!-- Recipe Status and Details -->
-                <div class="mt-auto space-y-4 pt-3 border-t border-[#272320]">
-                    <div class="flex items-center justify-between">
+
+                    <!-- Ingredients List Preview -->
+                    <div class="py-3 space-y-1.5 min-h-[70px]">
                         @if($hasRecipe)
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-                                <span>{{ $recipeStatus }}</span>
-                            </span>
-                            <span class="text-xs font-mono text-white">
-                                HPP: <strong class="text-amber-400">Rp {{ number_format((int)$hppTotal, 0, ',', '.') }}</strong>
-                            </span>
+                            <p class="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Komposisi Bahan:</p>
+                            <div class="space-y-1">
+                                @foreach($product->recipes->take(3) as $recipe)
+                                    <div class="flex justify-between items-center text-[11px] text-stone-300">
+                                        <span class="truncate pr-2">• {{ $recipe->rawMaterial->name ?? 'Bahan' }}</span>
+                                        <span class="font-mono text-stone-400 shrink-0 tabular-nums">
+                                            {{ (float) $recipe->qty_used }} {{ $recipe->rawMaterial->unit ?? '' }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                                @if($product->recipes->count() > 3)
+                                    <p class="text-[10px] text-stone-500 italic">+ {{ $product->recipes->count() - 3 }} bahan lainnya</p>
+                                @endif
+                            </div>
                         @else
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
-                                <span>{{ $recipeStatus }}</span>
-                            </span>
-                            <span class="text-xs text-stone-500 font-mono">0 Bahan</span>
+                            <div class="h-full flex items-center gap-2 text-stone-500 text-xs py-2">
+                                <i data-lucide="info" class="w-4 h-4 text-stone-600 shrink-0"></i>
+                                <span>Belum ada bahan baku terhubung.</span>
+                            </div>
                         @endif
                     </div>
-                    
-                    <!-- Action Button -->
+                </div>
+
+                <!-- Footer Summary & CTA -->
+                <div class="pt-3 border-t border-[#22201D] space-y-2.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <div>
+                            @if($hasRecipe)
+                                <span class="badge badge-ready">
+                                    <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i>
+                                    <span>Lengkap</span>
+                                </span>
+                            @else
+                                <span class="badge badge-warning">
+                                    <i data-lucide="alert-circle" class="w-3 h-3 text-amber-400"></i>
+                                    <span>Belum Beresep</span>
+                                </span>
+                            @endif
+                        </div>
+                        <div class="text-right font-mono text-xs">
+                            <span class="text-stone-400">HPP: </span>
+                            <strong class="{{ $hasRecipe ? 'text-stone-200' : 'text-stone-500' }} tabular-nums">
+                                Rp {{ number_format((int)$hppTotal, 0, ',', '.') }}
+                            </strong>
+                            @if($hasRecipe && $margin > 0)
+                                <span class="text-[10px] text-emerald-400 ml-1">({{ round($margin) }}%)</span>
+                            @endif
+                        </div>
+                    </div>
+
                     <a 
                         href="{{ route('admin.recipes.edit', $product) }}" 
-                        class="w-full py-2.5 px-4 rounded-xl border border-[#2D2A26] bg-[#24211E] hover:bg-amber-600 hover:border-amber-600 text-stone-200 hover:text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition"
+                        class="btn btn-sm btn-secondary w-full justify-between"
                     >
-                        <span>Atur Resep Komposisi</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        <span>Atur Komposisi Resep</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-stone-400"></i>
                     </a>
                 </div>
             </div>
         @empty
-            <div class="col-span-full text-center py-12 bg-[#181716] border border-[#2D2A26] rounded-2xl">
-                <p class="text-xs text-[#A8A29E]">Tidak ada produk ditemukan.</p>
+            <div class="col-span-full text-center py-12 surface-card space-y-2">
+                <i data-lucide="coffee" class="w-8 h-8 text-stone-600 mx-auto"></i>
+                <p class="text-xs text-stone-400 font-medium">Tidak ada produk ditemukan sesuai filter.</p>
             </div>
         @endforelse
-    </div>
-
-    <!-- Summary KPI Bar -->
-    <div class="p-5 bg-[#181716] border border-[#2D2A26] rounded-2xl flex items-center justify-between flex-wrap gap-6 shadow-lg">
-        <div class="flex gap-8 sm:gap-12 flex-wrap">
-            <div>
-                <p class="text-[11px] text-[#A8A29E] uppercase font-bold tracking-wider mb-0.5">Total Menu</p>
-                <p class="text-2xl font-bold font-mono text-white">{{ $totalProducts }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] text-[#A8A29E] uppercase font-bold tracking-wider mb-0.5">Sudah Beresep</p>
-                <p class="text-2xl font-bold font-mono text-emerald-400">{{ $productsWithRecipe }}</p>
-            </div>
-            <div>
-                <p class="text-[11px] text-[#A8A29E] uppercase font-bold tracking-wider mb-0.5">HPP Rata-rata</p>
-                <p class="text-2xl font-bold font-mono text-amber-400">Rp {{ number_format($averageHpp, 0, ',', '.') }}</p>
-            </div>
-        </div>
     </div>
 </div>
 @endsection

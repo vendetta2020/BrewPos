@@ -26,6 +26,7 @@ class Order extends Model
         'tax',
         'total',
         'payment_method',
+        'payment_reference',
         'cash_received',
         'change_given',
         'status',

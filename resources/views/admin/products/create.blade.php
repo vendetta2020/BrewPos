@@ -58,17 +58,13 @@
                 <label for="category_id" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
                     Kategori Menu <span class="text-rose-400">*</span>
                 </label>
-                <select 
+                <x-dropdown-select 
                     name="category_id" 
                     id="category_id" 
-                    class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-white transition"
+                    :options="$categories" 
+                    placeholder="-- Pilih Kategori --"
                     required
-                >
-                    <option value="" class="bg-[#181716] text-stone-400">-- Pilih Kategori --</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }} class="bg-[#181716] text-white">{{ $category->name }}</option>
-                    @endforeach
-                </select>
+                />
                 @error('category_id')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
             </div>
 

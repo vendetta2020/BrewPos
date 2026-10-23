@@ -52,16 +52,18 @@
                 <label for="role" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider">
                     Peran / Hak Akses (Role) <span class="text-rose-400">*</span>
                 </label>
-                <select 
+                <x-dropdown-select 
                     name="role" 
                     id="role" 
-                    class="w-full px-3.5 py-2.5 bg-[#141312] border border-[#2D2A26] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-xs font-medium text-white transition"
+                    :options="[
+                        'admin' => 'Admin (Akses Penuh Manajemen)',
+                        'cashier' => 'Kasir (Layar Transaksi POS)',
+                        'barista' => 'Barista (Layar Dapur KDS)',
+                    ]"
+                    :selected="old('role', $user->role)"
+                    placeholder="-- Pilih Peran --"
                     required
-                >
-                    <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }} class="bg-[#181716] text-white">Admin (Akses Penuh Manajemen)</option>
-                    <option value="cashier" {{ old('role', $user->role) === 'cashier' ? 'selected' : '' }} class="bg-[#181716] text-white">Kasir (Layar Transaksi POS)</option>
-                    <option value="barista" {{ old('role', $user->role) === 'barista' ? 'selected' : '' }} class="bg-[#181716] text-white">Barista (Layar Dapur KDS)</option>
-                </select>
+                />
                 @error('role')<p class="text-xs text-rose-400 mt-1">{{ $message }}</p>@enderror
             </div>
 

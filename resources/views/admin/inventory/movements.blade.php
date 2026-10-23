@@ -43,25 +43,30 @@
             <!-- Material Dropdown -->
             <div>
                 <label class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider mb-1.5">Bahan Baku</label>
-                <select name="raw_material_id" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-[#141312] border border-[#2D2A26] text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                    <option value="" class="bg-[#181716] text-stone-400">Semua Bahan Baku</option>
-                    @foreach($materials as $mat)
-                        <option value="{{ $mat->id }}" {{ request('raw_material_id') == $mat->id ? 'selected' : '' }} class="bg-[#181716] text-white">
-                            {{ $mat->name }} ({{ $mat->unit }})
-                        </option>
-                    @endforeach
-                </select>
+                @php
+                    $matOptions = $materials->mapWithKeys(fn($m) => [$m->id => "{$m->name} ({$m->unit})"])->toArray();
+                @endphp
+                <x-dropdown-select 
+                    name="raw_material_id"
+                    :options="$matOptions"
+                    :selected="request('raw_material_id')"
+                    placeholder="Semua Bahan Baku"
+                />
             </div>
 
             <!-- Type Dropdown -->
             <div>
                 <label class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider mb-1.5">Tipe Mutasi</label>
-                <select name="type" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-[#141312] border border-[#2D2A26] text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                    <option value="" class="bg-[#181716] text-stone-400">Semua Tipe</option>
-                    <option value="in" {{ request('type') === 'in' ? 'selected' : '' }} class="bg-[#181716] text-white">Masuk (Restock / Void)</option>
-                    <option value="out" {{ request('type') === 'out' ? 'selected' : '' }} class="bg-[#181716] text-white">Keluar (Penjualan)</option>
-                    <option value="adjust" {{ request('type') === 'adjust' ? 'selected' : '' }} class="bg-[#181716] text-white">Koreksi (Penyesuaian Manual)</option>
-                </select>
+                <x-dropdown-select 
+                    name="type"
+                    :options="[
+                        'in' => 'Masuk (Restock / Void)',
+                        'out' => 'Keluar (Penjualan)',
+                        'adjust' => 'Koreksi (Penyesuaian Manual)',
+                    ]"
+                    :selected="request('type')"
+                    placeholder="Semua Tipe"
+                />
             </div>
 
             <!-- Action Buttons -->

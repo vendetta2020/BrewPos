@@ -4,16 +4,16 @@
 @section('page_title', 'Manajemen Bahan Baku')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-5">
     <!-- Feedback Alerts -->
     @if(session('success'))
-        <div class="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-2.5">
+        <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold flex items-center gap-2">
             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
             <span>{{ session('success') }}</span>
         </div>
     @endif
     @if(session('error'))
-        <div class="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-semibold flex items-center gap-2.5">
+        <div class="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-xs font-semibold flex items-center gap-2">
             <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0"></i>
             <span>{{ session('error') }}</span>
         </div>
@@ -21,157 +21,166 @@
 
     <!-- Summary Metrics Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-[#181716] rounded-2xl p-5 border border-[#2D2A26] shadow-lg">
+        <div class="stat-tile flex flex-col justify-between">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-[#A8A29E] uppercase tracking-wider">Total Bahan Baku</p>
-                    <p class="text-2xl font-bold font-mono text-white mt-1">{{ $rawMaterials->total() }}</p>
+                <span class="text-xs font-medium text-stone-400">Total Bahan Baku</span>
+                <i data-lucide="boxes" class="w-4 h-4 text-stone-400"></i>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold font-mono text-white tabular-nums">
+                    {{ $rawMaterials->total() }}
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center">
-                    <i data-lucide="boxes" class="w-5 h-5"></i>
-                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">Item terdaftar di gudang</p>
             </div>
         </div>
 
-        <div class="bg-[#181716] rounded-2xl p-5 border border-[#2D2A26] shadow-lg">
+        <div class="stat-tile flex flex-col justify-between">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-[#A8A29E] uppercase tracking-wider">Hampir Habis</p>
-                    <p class="text-2xl font-bold font-mono text-amber-400 mt-1">{{ $warningCount ?? 0 }}</p>
+                <span class="text-xs font-medium text-stone-400">Hampir Habis</span>
+                <i data-lucide="alert-circle" class="w-4 h-4 {{ ($warningCount ?? 0) > 0 ? 'text-amber-400' : 'text-stone-400' }}"></i>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold font-mono tabular-nums {{ ($warningCount ?? 0) > 0 ? 'text-amber-400' : 'text-stone-200' }}">
+                    {{ $warningCount ?? 0 }}
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">Mendekati batas minimum</p>
             </div>
         </div>
 
-        <div class="bg-[#181716] rounded-2xl p-5 border border-[#2D2A26] shadow-lg">
+        <div class="stat-tile flex flex-col justify-between">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-[#A8A29E] uppercase tracking-wider">Stok Kritis</p>
-                    <p class="text-2xl font-bold font-mono text-rose-400 mt-1">{{ $criticalCount ?? 0 }}</p>
+                <span class="text-xs font-medium text-stone-400">Stok Kritis</span>
+                <i data-lucide="alert-triangle" class="w-4 h-4 {{ ($criticalCount ?? 0) > 0 ? 'text-rose-400' : 'text-stone-400' }}"></i>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold font-mono tabular-nums {{ ($criticalCount ?? 0) > 0 ? 'text-rose-400' : 'text-emerald-400' }}">
+                    {{ $criticalCount ?? 0 }}
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">Harus segera di-restock</p>
             </div>
         </div>
 
-        <div class="bg-[#181716] rounded-2xl p-5 border border-[#2D2A26] shadow-lg">
+        <div class="stat-tile flex flex-col justify-between">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-[#A8A29E] uppercase tracking-wider">Estimasi Nilai Stok</p>
-                    <p class="text-xl font-bold font-mono text-emerald-400 mt-1">Rp {{ number_format($totalInventoryValue ?? 0, 0, ',', '.') }}</p>
+                <span class="text-xs font-medium text-stone-400">Estimasi Nilai Stok</span>
+                <i data-lucide="wallet" class="w-4 h-4 text-stone-400"></i>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold font-mono text-emerald-400 tabular-nums">
+                    Rp {{ number_format($totalInventoryValue ?? 0, 0, ',', '.') }}
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <i data-lucide="wallet" class="w-5 h-5"></i>
-                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">Valuasi berbasis HPP unit</p>
             </div>
         </div>
     </div>
 
     <!-- Filter & Toolbar -->
-    <div class="bg-[#181716] rounded-2xl p-4 sm:p-5 border border-[#2D2A26] shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <form method="GET" class="flex flex-1 flex-col sm:flex-row gap-3">
-            <div class="relative flex-1">
+    <div class="surface-card p-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <form method="GET" class="flex flex-1 flex-col sm:flex-row items-center gap-2.5">
+            <div class="relative flex-1 w-full sm:w-auto">
                 <input 
                     name="search" 
                     value="{{ request('search') }}"
-                    class="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl bg-[#141312] border border-[#2D2A26] text-white placeholder-stone-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500" 
+                    class="form-input pl-8" 
                     placeholder="Cari nama bahan baku..." 
                     type="text"
                 />
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-500">
-                    <i data-lucide="search" class="w-4 h-4"></i>
+                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-stone-500">
+                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
                 </div>
             </div>
 
-            <select name="category" class="px-3.5 py-2.5 text-xs rounded-xl bg-[#141312] border border-[#2D2A26] text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                <option value="" class="bg-[#181716] text-stone-400">Semua Kategori</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category }}" @if(request('category') === $category) selected @endif class="bg-[#181716] text-white">{{ $category }}</option>
-                @endforeach
-            </select>
+            <div class="sm:w-48">
+                @php
+                    $catOpts = collect($categories)->mapWithKeys(fn($c) => [$c => $c])->toArray();
+                @endphp
+                <x-dropdown-select 
+                    name="category"
+                    :options="$catOpts"
+                    :selected="request('category')"
+                    placeholder="Semua Kategori"
+                />
+            </div>
 
-            <button type="submit" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 active:scale-[0.99] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-md shadow-amber-600/20 flex items-center justify-center gap-1.5">
+            <button type="submit" class="btn btn-sm btn-primary w-full sm:w-auto shrink-0">
                 <i data-lucide="filter" class="w-3.5 h-3.5"></i>
                 <span>Filter</span>
             </button>
             @if(request()->hasAny(['search', 'category']))
-                <a href="{{ route('admin.raw-materials.index') }}" class="px-3 py-2.5 bg-[#24211E] hover:bg-[#2D2A26] text-stone-300 border border-[#2D2A26] text-xs font-semibold rounded-xl transition flex items-center justify-center">
+                <a href="{{ route('admin.raw-materials.index') }}" class="btn btn-sm btn-outline shrink-0" title="Reset Filter">
                     <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                 </a>
             @endif
         </form>
 
-        <div class="flex items-center gap-2">
-            <a href="{{ route('admin.inventory.movements') }}" class="px-3.5 py-2.5 border border-[#2D2A26] bg-[#24211E] hover:bg-[#2D2A26] text-stone-200 text-xs font-semibold rounded-xl transition flex items-center gap-1.5">
-                <i data-lucide="history" class="w-4 h-4 text-stone-400"></i>
+        <div class="flex items-center gap-2 flex-wrap">
+            <a href="{{ route('admin.inventory.movements') }}" class="btn btn-sm btn-secondary">
+                <i data-lucide="history" class="w-3.5 h-3.5 text-stone-400"></i>
                 <span>Log Mutasi</span>
             </a>
-            <a href="{{ route('admin.restocks.create') }}" class="px-3.5 py-2.5 border border-[#2D2A26] bg-[#24211E] hover:bg-[#2D2A26] text-stone-200 text-xs font-semibold rounded-xl transition flex items-center gap-1.5">
-                <i data-lucide="arrow-down-to-dot" class="w-4 h-4 text-amber-500"></i>
+            <a href="{{ route('admin.restocks.create') }}" class="btn btn-sm btn-secondary">
+                <i data-lucide="arrow-down-to-dot" class="w-3.5 h-3.5 text-amber-500"></i>
                 <span>Catat Restock</span>
             </a>
-            <a href="{{ route('admin.raw-materials.create') }}" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 active:scale-[0.99] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-amber-600/20 transition flex items-center gap-1.5">
-                <i data-lucide="plus" class="w-4 h-4"></i>
+            <a href="{{ route('admin.raw-materials.create') }}" class="btn btn-sm btn-primary">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 <span>Tambah Bahan</span>
             </a>
         </div>
     </div>
 
     <!-- Table Container -->
-    <div class="bg-[#181716] border border-[#2D2A26] rounded-2xl shadow-lg overflow-hidden">
+    <div class="surface-card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-stone-200">
-                <thead class="bg-[#141210] border-b border-[#2D2A26] text-[#A8A29E] font-semibold uppercase tracking-wider text-[11px]">
+                <thead class="bg-[#141312] border-b border-[#2A2724] text-stone-400 font-semibold text-[11px]">
                     <tr>
-                        <th class="px-5 py-3.5">Nama Bahan</th>
-                        <th class="px-5 py-3.5">Kategori</th>
-                        <th class="px-5 py-3.5 text-center">Satuan</th>
-                        <th class="px-5 py-3.5 text-right">Stok Saat Ini</th>
-                        <th class="px-5 py-3.5 text-right">Min. Stok</th>
-                        <th class="px-5 py-3.5 text-right">Harga / Unit</th>
-                        <th class="px-5 py-3.5 text-right">Est. Nilai</th>
-                        <th class="px-5 py-3.5 text-center">Status</th>
-                        <th class="px-5 py-3.5 text-right">Aksi</th>
+                        <th class="px-4 py-3 min-w-[170px]">Nama Bahan</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Kategori</th>
+                        <th class="px-4 py-3 text-center whitespace-nowrap">Satuan</th>
+                        <th class="px-4 py-3 text-right whitespace-nowrap">Stok Saat Ini</th>
+                        <th class="px-4 py-3 text-right whitespace-nowrap">Min. Stok</th>
+                        <th class="px-4 py-3 text-right whitespace-nowrap">Harga / Unit</th>
+                        <th class="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">Est. Nilai</th>
+                        <th class="px-4 py-3 text-center whitespace-nowrap">Status</th>
+                        <th class="px-4 py-3 text-right whitespace-nowrap">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#272320]">
+                <tbody class="divide-y divide-[#22201D]">
                     @forelse($rawMaterials as $material)
                         @php
                             $status = $material->getStockStatus();
-                            $statusBadge = match($status) {
-                                'Kritis' => 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-                                'Hampir Habis' => 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-                                default => 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            $statusBadgeClass = match($status) {
+                                'Kritis' => 'badge-danger',
+                                'Hampir Habis' => 'badge-warning',
+                                default => 'badge-ready'
                             };
                             $stockColor = match($status) {
-                                'Kritis' => 'text-rose-400 font-extrabold',
-                                'Hampir Habis' => 'text-amber-400 font-bold',
-                                default => 'text-white font-bold'
+                                'Kritis' => 'text-rose-400 font-bold',
+                                'Hampir Habis' => 'text-amber-400 font-semibold',
+                                default => 'text-white'
                             };
                         @endphp
-                        <tr class="hover:bg-[#1E1C1A] transition-colors">
-                            <td class="px-5 py-3.5 font-bold text-white">
+                        <tr class="hover:bg-[#1C1A18] transition-colors">
+                            <td class="px-4 py-3 font-semibold text-white whitespace-nowrap">
                                 {{ $material->name }}
                             </td>
-                            <td class="px-5 py-3.5 text-[#A8A29E]">{{ $material->category ?? '-' }}</td>
-                            <td class="px-5 py-3.5 text-center font-mono text-[#A8A29E]">{{ $material->unit }}</td>
-                            <td class="px-5 py-3.5 text-right font-mono {{ $stockColor }}">
-                                {{ number_format($material->stock_qty, 2, ',', '.') }}
+                            <td class="px-4 py-3 text-stone-400 whitespace-nowrap">{{ $material->category ?? '-' }}</td>
+                            <td class="px-4 py-3 text-center font-mono text-stone-400 whitespace-nowrap">{{ $material->unit }}</td>
+                            <td class="px-4 py-3 text-right font-mono tabular-nums whitespace-nowrap {{ $stockColor }}">
+                                {{ number_format($material->stock_qty, 0, ',', '.') }}
                             </td>
-                            <td class="px-5 py-3.5 text-right font-mono text-[#A8A29E]">
-                                {{ number_format($material->min_stock_qty, 2, ',', '.') }}
+                            <td class="px-4 py-3 text-right font-mono tabular-nums text-stone-400 whitespace-nowrap">
+                                {{ number_format($material->min_stock_qty, 0, ',', '.') }}
                             </td>
-                            <td class="px-5 py-3.5 text-right font-mono text-white">
+                            <td class="px-4 py-3 text-right font-mono tabular-nums text-stone-200 whitespace-nowrap">
                                 Rp {{ number_format($material->cost_per_unit, 0, ',', '.') }}
                             </td>
-                            <td class="px-5 py-3.5 text-right font-mono font-semibold text-white">
+                            <td class="px-4 py-3 text-right font-mono tabular-nums font-semibold text-stone-200 whitespace-nowrap">
                                 Rp {{ number_format($material->stock_qty * $material->cost_per_unit, 0, ',', '.') }}
                             </td>
-                            <td class="px-5 py-3.5 text-center">
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border {{ $statusBadge }}">
+                            <td class="px-4 py-3 text-center whitespace-nowrap">
+                                <span class="badge {{ $statusBadgeClass }}">
                                     @if($status === 'Kritis')
                                         <i data-lucide="alert-triangle" class="w-3 h-3 text-rose-400"></i>
                                     @elseif($status === 'Hampir Habis')
@@ -182,39 +191,36 @@
                                     <span>{{ $status }}</span>
                                 </span>
                             </td>
-                            <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <!-- Tombol Koreksi Stok (Adjust) -->
+                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1.5">
                                     <button 
                                         type="button" 
                                         onclick="openAdjustModal({{ $material->id }}, '{{ addslashes($material->name) }}', {{ $material->stock_qty }}, '{{ $material->unit }}')"
-                                        class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition flex items-center gap-1"
+                                        class="btn btn-sm btn-secondary"
                                         title="Koreksi Stok Fisik"
                                     >
-                                        <i data-lucide="sliders" class="w-3 h-3 text-amber-400"></i>
+                                        <i data-lucide="sliders" class="w-3.5 h-3.5 text-stone-400"></i>
                                         <span>Koreksi</span>
                                     </button>
 
-                                    <!-- Tombol Edit -->
                                     <a 
                                         href="{{ route('admin.raw-materials.edit', $material) }}" 
-                                        class="p-1.5 text-stone-400 hover:text-white hover:bg-[#2D2A26] rounded-lg transition" 
+                                        class="btn btn-sm btn-ghost p-1.5" 
                                         title="Edit Bahan Baku"
                                     >
-                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                        <i data-lucide="pencil" class="w-3.5 h-3.5 text-stone-400"></i>
                                     </a>
 
-                                    <!-- Tombol Hapus -->
                                     <form action="{{ route('admin.raw-materials.destroy', $material) }}" method="POST" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button 
                                             type="submit" 
                                             onclick="return confirm('Apakah Anda yakin ingin menghapus bahan baku {{ $material->name }}?')"
-                                            class="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition" 
+                                            class="btn btn-sm btn-ghost p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-950/30" 
                                             title="Hapus Bahan Baku"
                                         >
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -222,13 +228,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-[#A8A29E]">
-                                <div class="w-12 h-12 bg-[#141210] border border-[#2D2A26] rounded-2xl flex items-center justify-center mx-auto mb-2 text-amber-500">
-                                    <i data-lucide="inbox" class="w-6 h-6"></i>
-                                </div>
+                            <td colspan="9" class="px-6 py-12 text-center text-stone-400 space-y-2">
+                                <i data-lucide="inbox" class="w-8 h-8 text-stone-600 mx-auto"></i>
                                 <p class="font-semibold text-white">Belum ada data bahan baku.</p>
-                                <p class="text-xs text-[#A8A29E] mt-1">Tambahkan bahan baku baru untuk memulai pencatatan inventori.</p>
-                                <a href="{{ route('admin.raw-materials.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 mt-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition">
+                                <p class="text-xs text-stone-500">Tambahkan bahan baku baru untuk memulai pencatatan inventori.</p>
+                                <a href="{{ route('admin.raw-materials.create') }}" class="btn btn-sm btn-primary inline-flex mt-2">
                                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                     <span>Tambah Bahan Pertama</span>
                                 </a>
@@ -240,8 +244,8 @@
         </div>
 
         @if($rawMaterials->hasPages())
-            <div class="px-6 py-4 border-t border-[#272320] flex items-center justify-between bg-[#141210]">
-                <span class="text-xs text-[#A8A29E]">
+            <div class="px-4 py-3 border-t border-[#2A2724] flex items-center justify-between text-xs text-stone-400">
+                <span>
                     Menampilkan {{ $rawMaterials->firstItem() ?? 0 }}-{{ $rawMaterials->lastItem() ?? 0 }} dari {{ $rawMaterials->total() }} bahan baku
                 </span>
                 <div>
@@ -253,33 +257,31 @@
 </div>
 
 <!-- Modal Koreksi Stok (Stock Adjustment) -->
-<div id="adjustModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[#181716] rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-[#2D2A26]">
-        <div class="px-6 py-4 bg-[#141210] border-b border-[#272320] flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold">
-                    <i data-lucide="sliders" class="w-4 h-4"></i>
-                </div>
+<div id="adjustModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="surface-card max-w-md w-full overflow-hidden shadow-2xl">
+        <div class="px-5 py-3.5 bg-[#141210] border-b border-[#2A2724] flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="sliders" class="w-4 h-4 text-amber-500"></i>
                 <div>
                     <h3 class="text-sm font-bold text-white">Koreksi Stok Bahan Baku</h3>
-                    <p id="modalMaterialName" class="text-xs text-[#A8A29E] font-medium"></p>
+                    <p id="modalMaterialName" class="text-xs text-stone-400"></p>
                 </div>
             </div>
-            <button type="button" onclick="closeAdjustModal()" class="text-stone-400 hover:text-white transition">
-                <i data-lucide="x" class="w-5 h-5"></i>
+            <button type="button" onclick="closeAdjustModal()" class="text-stone-400 hover:text-white p-1 rounded-md transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
 
-        <form id="adjustForm" method="POST" action="" class="p-6 space-y-4">
+        <form id="adjustForm" method="POST" action="" class="p-5 space-y-4">
             @csrf
             
-            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300">
+            <div class="p-3 surface-card-inset text-xs border border-amber-500/20 text-stone-300">
                 <p>Stok sistem saat ini: <strong id="modalCurrentStock" class="font-mono text-amber-400 font-bold"></strong></p>
-                <p class="text-[11px] text-[#A8A29E] mt-0.5">Masukkan jumlah stok fisik sebenarnya hasil stock opname.</p>
+                <p class="text-[11px] text-stone-400 mt-0.5">Masukkan jumlah stok fisik hasil audit stock opname terkini.</p>
             </div>
 
             <div>
-                <label for="adjusted_qty" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider mb-1.5">
+                <label for="adjusted_qty" class="form-label">
                     Stok Fisik Baru <span id="modalUnitLabel" class="text-stone-400 font-normal"></span> <span class="text-rose-400">*</span>
                 </label>
                 <input 
@@ -289,13 +291,13 @@
                     name="adjusted_qty" 
                     id="adjusted_qty" 
                     required 
-                    placeholder="0.00" 
-                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-[#141312] border border-[#2D2A26] text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-mono font-bold"
+                    placeholder="0" 
+                    class="form-input font-mono font-bold"
                 >
             </div>
 
             <div>
-                <label for="adjust_reason" class="block text-xs font-bold text-[#A8A29E] uppercase tracking-wider mb-1.5">
+                <label for="adjust_reason" class="form-label">
                     Alasan Penyesuaian <span class="text-rose-400">*</span>
                 </label>
                 <textarea 
@@ -304,23 +306,23 @@
                     rows="2" 
                     required 
                     placeholder="Contoh: Selisih stock opname mingguan / bahan tumpah / expired" 
-                    class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-[#141312] border border-[#2D2A26] text-white placeholder-stone-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    class="form-input"
                 ></textarea>
             </div>
 
-            <div class="flex items-center gap-3 pt-2">
+            <div class="flex items-center gap-2.5 pt-1">
                 <button 
                     type="button" 
                     onclick="closeAdjustModal()" 
-                    class="flex-1 py-2.5 border border-[#2D2A26] text-stone-300 hover:bg-[#24211E] font-semibold text-xs rounded-xl transition"
+                    class="btn btn-md btn-secondary flex-1"
                 >
                     Batal
                 </button>
                 <button 
                     type="submit" 
-                    class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-amber-600/20 transition flex items-center justify-center gap-1.5"
+                    class="btn btn-md btn-primary flex-1"
                 >
-                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
                     <span>Simpan Koreksi</span>
                 </button>
             </div>
