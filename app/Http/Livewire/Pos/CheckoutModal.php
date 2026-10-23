@@ -117,6 +117,28 @@ class CheckoutModal extends Component
         $this->qrisString = $trx['qr_string'];
         $this->qrisStatus = 'pending';
         $this->qrisMessage = null;
+
+        // Integrasi ke Payment Gateway: Daftarkan transaksi pembayaran
+        try {
+            $gatewayUrl = env('PAYMENT_GATEWAY_URL', 'http://host.docker.internal:3005/api/v1');
+            $secretKey = env('PAYMENT_GATEWAY_SECRET_KEY');
+
+            if ($secretKey) {
+                \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization'   => 'Bearer ' . $secretKey,
+                    'Idempotency-Key' => $this->qrisReference,
+                    'Content-Type'    => 'application/json',
+                ])->post(rtrim($gatewayUrl, '/') . '/payments', [
+                    'amount'        => (int) $total,
+                    'currency'      => 'IDR',
+                    'orderId'       => $this->qrisReference,
+                    'paymentMethod' => 'QRIS',
+                    'description'   => 'Pembayaran Kasir BrewPOS Order ' . $this->qrisReference,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal mengirim payment ke gateway: ' . $e->getMessage());
+        }
     }
 
     public function checkQrisStatus(bool $manual = false): void
