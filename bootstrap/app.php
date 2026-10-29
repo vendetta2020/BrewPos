@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         // Register custom middleware aliases for role-based access control
         // Satisfies SDD section 7.1 — Role Middleware registration
         // Satisfies SRS: AUTH-03 — role enforcement
